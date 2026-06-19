@@ -38,6 +38,7 @@ from __future__ import annotations
 import heapq
 import itertools
 import time
+import collections
 from typing import Callable
 
 
@@ -46,19 +47,36 @@ class EventLoop:
         # TODO: a FIFO of callbacks ready to run now
         # TODO: a min-heap of scheduled timers: (when, tiebreak, callback)
         # TODO: a counter for stable ordering of equal timestamps
-        raise NotImplementedError("build the loop's internal state")
+        self.queue = collections.deque()
+        self.heap = []
+        self.counter = itertools.count()
 
     def call_soon(self, callback: Callable[[], None]) -> None:
         """Schedule `callback` to run on the next tick."""
-        raise NotImplementedError
+        self.queue.append(callback)
+        
 
     def call_later(self, delay: float, callback: Callable[[], None]) -> None:
-        """Schedule `callback` to run approximately `delay` seconds from now."""
-        raise NotImplementedError
+        next_time = time.monotonic() + delay
+        heapq.heappush(self.heap, (next_time, next(self.counter), callback))
 
     def run(self) -> None:
-        """Run until there is no ready work and no pending timers."""
-        raise NotImplementedError
+        while self.queue or self.heap:
+            now = time.monotonic()
+            
+            while self.heap and self.heap[0][0] >= now:
+                self.call_soon(heapq.heappop(self.heap)[2])
+            
+            if not self.queue and self.heap:
+                sleep_time = self.heap[0][0] - time.monotonic()
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                continue
+
+            num_ticks = len(self.queue)
+            for _ in range(num_ticks):
+                self.queue.popleft()()
+        
 
 
 def _self_check() -> None:

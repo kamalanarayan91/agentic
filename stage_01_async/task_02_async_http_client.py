@@ -18,9 +18,14 @@ Things to get right (these are the actual lessons):
   - Create exactly one ClientSession and reuse it (`async with`). Opening a
     session per feed is the #1 beginner mistake — and at ingestion volume it
     will exhaust connections fast.
-  - Use asyncio.gather to fan out — not a for-loop of awaits, which fetches feeds
-    one at a time and makes a 50-feed pull take 50x as long.
-  - Preserve input order in the output. gather does this for you; know why.
+  - Fan out concurrently — not a for-loop of awaits, which fetches feeds one at a
+    time and makes a 50-feed pull take 50x as long. Do it BOTH ways and feel it:
+      * asyncio.gather (with return_exceptions to control partial failure), and
+      * asyncio.TaskGroup (3.11+, the modern structured-concurrency idiom).
+    Then answer in NOTES.md: when one feed raises, what happens to the other 49
+    under each approach? Cancellation semantics are where async agents break.
+  - Preserve input order in the output. gather does this for you; know why
+    (and what you have to do yourself to keep order under TaskGroup).
   - Surface HTTP errors instead of archiving a 500 body as if it were content
     (look at `resp.raise_for_status()`).
 """

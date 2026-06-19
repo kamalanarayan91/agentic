@@ -36,21 +36,31 @@ uv run uvicorn stage_01_async.task_03_fastapi_fanout.app:app --reload
 
 ## The 7 tasks
 
-| # | File | What you're proving | Has tests? |
-|---|------|---------------------|------------|
-| 1 | `task_01_toy_event_loop.py` | You understand what an event loop *is* before using one | self-check `__main__` |
-| 2 | `task_02_async_http_client.py` | Raw aiohttp pulling RSS/newsletter text concurrently, no wrapper SDKs | `tests/test_02_http_client.py` |
-| 3 | `task_03_fastapi_fanout/app.py` | Ingestion webhook fans out to RSS + YouTube + Substack and merges | `tests/test_03_fastapi.py` |
-| 4 | `task_04_resilience.py` | Scraper retry+backoff and timeout decorators fire at the right thresholds | `tests/test_04_resilience.py` |
-| 5 | `task_05_callbacks_vs_async.py` | Same ingestion pipeline two ways; you can name the bug classes each invites | write-up in file |
-| 6 | `task_06_rate_limiter.py` | A Semaphore actually caps concurrent media requests under load | `tests/test_06_rate_limiter.py` |
-| 7 | `tests/test_03_fastapi.py` | pytest-asyncio integration incl. a deliberate timeout on a hanging scraper | (that file) |
+| File | What you're proving | Has tests? |
+|------|---------------------|------------|
+| `task_01_toy_event_loop.py` | You understand what an event loop *is* before using one | self-check `__main__` |
+| `task_02_async_http_client.py` | Raw aiohttp pulling RSS/newsletter text concurrently (gather *and* TaskGroup), no wrapper SDKs | `tests/test_02_http_client.py` |
+| `task_03_fastapi_fanout/app.py` | Ingestion webhook fans out to RSS + YouTube + Substack and merges | `tests/test_03_fastapi.py` |
+| `task_07_idempotent_ingest.py` | At-most-once ingestion: content-addressed dedup + durable across runs | `tests/test_07_idempotent_ingest.py` |
+| `task_04_resilience.py` | Scraper retry+backoff and timeout decorators fire at the right thresholds | `tests/test_04_resilience.py` |
+| `task_05_callbacks_vs_async.py` | Same ingestion pipeline two ways; you can name the bug classes each invites | write-up in file |
+| `task_06_rate_limiter.py` | A Semaphore actually caps concurrent media requests under load | `tests/test_06_rate_limiter.py` |
+| `tests/test_03_fastapi.py` | pytest-asyncio integration incl. a deliberate timeout on a hanging scraper | (that file) |
+
+> The curriculum lists 8 Stage 1 tasks; the integration-tests task lives in
+> `tests/test_03_fastapi.py` rather than its own module. File numbers are just
+> creation order — work them in the suggested order below, not numerically.
 
 ## Suggested order
 
-1 → 4 → 6 → 2 → 3 → 7 → 5. Build the primitives (loop, decorators, limiter)
-before the I/O-bound ones, and do the callbacks-vs-async write-up last when you
-have the most async intuition to compare against.
+`task_01` → `task_04` → `task_06` → `task_02` → `task_03` → `test_03` (the
+integration/timeout task) → `task_07` (idempotent ingest) → `task_05`
+(callbacks-vs-async write-up).
+
+Build the primitives (loop, decorators, limiter) before the I/O-bound ones; do
+idempotency once you have a working fetcher to dedupe; and save the
+callbacks-vs-async write-up for last when you have the most async intuition to
+compare against.
 
 ## Definition of done for the stage
 
